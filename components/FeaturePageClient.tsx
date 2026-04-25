@@ -92,6 +92,8 @@ export default function FeaturePageClient({ slug }: { slug: string }) {
   const [apifyToken] = useLS<string>('marketing_apify_token', '')
   const [researchType, setResearchType] = useState<'serp' | 'trends'>('serp')
   const [researchQuery, setResearchQuery] = useState('')
+  const [generatedResearchQueries, setGeneratedResearchQueries] = useState<string[]>([])
+  const [researchReasoning, setResearchReasoning] = useState('')
   const [researchData, setResearchData] = useState<ResearchData | null>(null)
   const [researching, setResearching] = useState(false)
   const [model] = useLS<string>('marketing_model', 'openai/gpt-5.5')
@@ -121,6 +123,13 @@ export default function FeaturePageClient({ slug }: { slug: string }) {
   useEffect(() => {
     if (siteProfile?.url && !siteUrl) setSiteUrl(siteProfile.url)
   }, [siteProfile, siteUrl])
+
+  useEffect(() => {
+    const nextType = searchParams.get('researchType')
+    const nextQuery = searchParams.get('researchQuery')
+    if (nextType === 'serp' || nextType === 'trends') setResearchType(nextType)
+    if (nextQuery && !researchQuery) setResearchQuery(nextQuery)
+  }, [searchParams, researchQuery])
 
   function set(id: string, v: string) { setVals(p => ({ ...p, [id]: v })) }
 
@@ -175,16 +184,37 @@ export default function FeaturePageClient({ slug }: { slug: string }) {
   async function runResearch() {
     if (!apifyToken) { setError('Add your Apify API token in Settings first.'); return }
     if (!researchQuery.trim()) { setError('Enter a SERP or Trends query first.'); return }
+    if (!apiKey) { setError('Add your OpenRouter API key in Settings first.'); return }
     setError('')
     setResearching(true)
     setResearchData(null)
     try {
+      const queryRes = await fetch('/api/research-queries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          apiKey,
+          model,
+          researchType,
+          queryHint: researchQuery,
+          featureTitle: feature.title,
+          featureGoal: feature.tagline,
+          siteProfile,
+        }),
+      })
+      const queryData = await queryRes.json()
+      if (!queryRes.ok) throw new Error(queryData.error || 'Failed to generate relevant research queries')
+      const concreteQueries = Array.isArray(queryData.queries) ? queryData.queries.filter(Boolean).slice(0, 5) : []
+      if (!concreteQueries.length) throw new Error('No relevant research queries were generated')
+      setGeneratedResearchQueries(concreteQueries)
+      setResearchReasoning(queryData.reasoning || '')
+
       const res = await fetch('/api/apify-research', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: researchType,
-          query: researchQuery,
+          query: concreteQueries.join('\n'),
           token: apifyToken,
         }),
       })
@@ -459,7 +489,9 @@ export default function FeaturePageClient({ slug }: { slug: string }) {
               <Search size={14} style={{ color: 'var(--ac-l)' }} />
               <div>
                 <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--t0)' }}>Apify research</p>
-                <p style={{ fontSize: 11, color: 'var(--t2)' }}>Pull Google SERP or Trends data into this generation.</p>
+                <p style={{ fontSize: 11, color: 'var(--t2)' }}>
+                  {searchParams.get('researchQuery') ? 'Recommended by this workflow. Run it before generating.' : 'Pull Google SERP or Trends data into this generation.'}
+                </p>
               </div>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
@@ -492,7 +524,7 @@ export default function FeaturePageClient({ slug }: { slug: string }) {
               disabled={researching || !researchQuery.trim()}
               style={{ justifyContent: 'center' }}
             >
-              {researching ? <><Loader2 size={12} className="anim-spin" /> Researching...</> : <><Search size={12} /> Run research</>}
+              {researching ? <><Loader2 size={12} className="anim-spin" /> Building queries...</> : <><Search size={12} /> Generate relevant queries + research</>}
             </button>
             {!apifyToken && (
               <Link href="/settings" className="alert alert-warning" style={{ display: 'block', cursor: 'pointer' }}>
@@ -503,6 +535,17 @@ export default function FeaturePageClient({ slug }: { slug: string }) {
               <div className="alert alert-success">
                 <p style={{ fontWeight: 700, marginBottom: 4 }}>{researchData.type.toUpperCase()} research ready · {researchData.count} items</p>
                 <p style={{ opacity: 0.85 }}>{researchData.query}</p>
+              </div>
+            )}
+            {generatedResearchQueries.length > 0 && (
+              <div style={{ background: 'var(--s2)', border: '1px solid var(--b0)', borderRadius: 8, padding: 10 }}>
+                <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--t0)', marginBottom: 6 }}>Generated site-relevant queries</p>
+                <ul style={{ display: 'grid', gap: 5 }}>
+                  {generatedResearchQueries.map((query, i) => (
+                    <li key={i} style={{ color: 'var(--t1)', fontSize: 11, lineHeight: 1.4 }}>{query}</li>
+                  ))}
+                </ul>
+                {researchReasoning && <p style={{ color: 'var(--t2)', fontSize: 11, lineHeight: 1.45, marginTop: 8 }}>{researchReasoning}</p>}
               </div>
             )}
           </div>

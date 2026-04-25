@@ -78,9 +78,13 @@ export default function WorkflowsPage() {
                 {workflow.steps.map((step, index) => {
                   const artifact = latestFor(artifacts, step.slug)
                   const previous = index > 0 ? latestFor(artifacts, workflow.steps[index - 1].slug) : undefined
-                  const href = previous
-                    ? `/features/${step.slug}?artifact=${encodeURIComponent(previous.id)}&workflow=${encodeURIComponent(workflow.id)}`
-                    : `/features/${step.slug}?workflow=${encodeURIComponent(workflow.id)}`
+                  const params = new URLSearchParams({ workflow: workflow.id })
+                  if (previous) params.set('artifact', previous.id)
+                  if (step.research) {
+                    params.set('researchType', step.research.type)
+                    params.set('researchQuery', step.research.queryHint)
+                  }
+                  const href = `/features/${step.slug}?${params.toString()}`
 
                   return (
                     <div key={step.slug} style={{
@@ -110,9 +114,15 @@ export default function WorkflowsPage() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 3 }}>
                           <h3 style={{ fontSize: 13, fontWeight: 750 }}>{step.title}</h3>
                           {previous && <span className="badge" style={{ color: 'var(--ac-l)', background: 'rgba(124,58,237,0.08)', borderColor: 'rgba(124,58,237,0.18)' }}>uses previous artifact</span>}
+                          {step.research && <span className="badge badge-yellow">{step.research.type.toUpperCase()} research</span>}
                           {artifact && <span className="badge badge-green">done</span>}
                         </div>
                         <p style={{ color: 'var(--t1)', fontSize: 12, lineHeight: 1.55 }}>{step.goal}</p>
+                        {step.research && (
+                          <p style={{ color: 'var(--t2)', fontSize: 11, lineHeight: 1.5, marginTop: 4 }}>
+                            Research: {step.research.purpose} Query: {step.research.queryHint}
+                          </p>
+                        )}
                         {artifact && (
                           <p style={{ color: 'var(--t2)', fontSize: 11, marginTop: 4 }}>
                             Latest: {new Date(artifact.createdAt).toLocaleString()}
