@@ -5,6 +5,8 @@ import { Eye, EyeOff, Check, Settings, ExternalLink, ArrowLeft, Shield } from 'l
 import Link from 'next/link'
 
 const MODELS = [
+  { value: 'openai/gpt-5.5',              label: 'GPT-5.5',            desc: 'OpenAI frontier model - Recommended', badge: '*' },
+  { value: 'openai/gpt-5.5-pro',          label: 'GPT-5.5 Pro',        desc: 'OpenAI - Deep reasoning, higher cost' },
   { value: 'anthropic/claude-sonnet-4-5', label: 'Claude Sonnet 4.5', desc: 'Best quality · Recommended', badge: '⭐' },
   { value: 'anthropic/claude-haiku-4-5',  label: 'Claude Haiku 4.5',  desc: 'Fastest · Most affordable' },
   { value: 'anthropic/claude-opus-4',     label: 'Claude Opus 4',     desc: 'Most powerful · Slower' },
@@ -16,7 +18,8 @@ const MODELS = [
 
 export default function SettingsPage() {
   const [apiKey, setApiKey] = useState('')
-  const [model, setModel] = useState('anthropic/claude-sonnet-4-5')
+  const [apifyToken, setApifyToken] = useState('')
+  const [model, setModel] = useState('openai/gpt-5.5')
   const [showKey, setShowKey] = useState(false)
   const [saved, setSaved] = useState(false)
   const [testing, setTesting] = useState(false)
@@ -26,14 +29,17 @@ export default function SettingsPage() {
     try {
       const k = localStorage.getItem('marketing_api_key')
       const m = localStorage.getItem('marketing_model')
+      const a = localStorage.getItem('marketing_apify_token')
       if (k) setApiKey(JSON.parse(k))
       if (m) setModel(JSON.parse(m))
+      if (a) setApifyToken(JSON.parse(a))
     } catch {}
   }, [])
 
   function save() {
     localStorage.setItem('marketing_api_key', JSON.stringify(apiKey))
     localStorage.setItem('marketing_model', JSON.stringify(model))
+    localStorage.setItem('marketing_apify_token', JSON.stringify(apifyToken))
     setSaved(true); setTimeout(() => setSaved(false), 2500)
   }
 
@@ -133,6 +139,28 @@ export default function SettingsPage() {
               {testResult.ok ? '✓ ' : '✕ '}{testResult.msg}
             </div>
           )}
+        </div>
+      </section>
+
+      <section style={{ marginBottom: 24 }}>
+        <h2 style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--t2)', marginBottom: 12 }}>
+          Apify Research
+        </h2>
+        <div className="card" style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <p style={{ fontSize: 12, color: 'var(--t1)', lineHeight: 1.6 }}>
+            Optional. Used for Google Search Results and Google Trends research inside workflows.
+          </p>
+          <input
+            type="password"
+            className="input"
+            value={apifyToken}
+            onChange={e => setApifyToken(e.target.value)}
+            placeholder="apify_api_..."
+            style={{ fontFamily: 'monospace', fontSize: 13 }}
+          />
+          <a href="https://console.apify.com/settings/integrations" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--ac-l)', fontSize: 12 }}>
+            Get Apify API token <ExternalLink size={10} style={{ display: 'inline', verticalAlign: 'middle' }} />
+          </a>
         </div>
       </section>
 

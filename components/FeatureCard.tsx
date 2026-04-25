@@ -30,16 +30,18 @@ export default function FeatureCard({ feature }: { feature: Feature }) {
       onMouseLeave={() => setHovered(false)}
     >
       <article
-        className="card card-hover relative flex flex-col gap-3 overflow-hidden"
+        className="card card-hover relative flex flex-col overflow-hidden"
         style={{
-          padding: '16px',
-          borderColor: hovered ? `${color}44` : 'var(--b0)',
-          boxShadow: hovered ? `0 8px 24px rgba(0,0,0,0.45), 0 0 0 1px ${color}22` : 'none',
+          minHeight: 142,
+          padding: 14,
+          gap: 12,
+          borderColor: hovered ? `${color}55` : 'var(--b0)',
+          boxShadow: hovered ? `0 10px 24px rgba(0,0,0,0.26), 0 0 0 1px ${color}18` : 'var(--shadow-sm)',
         }}
       >
         {/* Top accent bar */}
         <div
-          className="absolute top-0 inset-x-0 h-[2px] rounded-t-xl transition-opacity"
+          className="absolute top-0 inset-x-0 h-[2px] transition-opacity"
           style={{
             background: `linear-gradient(90deg, ${color}, transparent)`,
             opacity: hovered ? 1 : 0,
@@ -50,8 +52,11 @@ export default function FeatureCard({ feature }: { feature: Feature }) {
         {/* Icon row */}
         <div className="flex items-start justify-between">
           <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
+            className="flex items-center justify-center text-lg flex-shrink-0"
             style={{
+              width: 36,
+              height: 36,
+              borderRadius: 8,
               background: `${color}14`,
               border: `1px solid ${color}28`,
             }}
@@ -75,7 +80,7 @@ export default function FeatureCard({ feature }: { feature: Feature }) {
         <div>
           <h3
             className="font-semibold leading-snug mb-1"
-            style={{ fontSize: 13, color: hovered ? '#fff' : 'var(--t0)' }}
+            style={{ fontSize: 13, color: hovered ? '#fff' : 'var(--t0)', letterSpacing: '-0.005em' }}
           >
             {feature.title}
           </h3>

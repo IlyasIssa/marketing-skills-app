@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
         'X-Title': 'Marketing Skills App',
       },
       body: JSON.stringify({
-        model: model || 'anthropic/claude-sonnet-4-5',
+        model: model || 'openai/gpt-5.5',
         messages,
         stream: true,
       }),

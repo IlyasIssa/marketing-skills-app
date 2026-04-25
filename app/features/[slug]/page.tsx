@@ -3,6 +3,7 @@ import { getFeatureBySlug, FEATURES, getFeaturesByCategory, getCategoryBySlug } 
 import FeaturePageClient from '@/components/FeaturePageClient'
 import Link from 'next/link'
 import { ChevronLeft } from 'lucide-react'
+import { Suspense } from 'react'
 
 export function generateStaticParams() {
   return FEATURES.map(f => ({ slug: f.slug }))
@@ -67,7 +68,9 @@ export default async function FeaturePage({ params }: { params: Promise<{ slug: 
         )}
       </div>
 
-      <FeaturePageClient slug={slug} />
+      <Suspense fallback={null}>
+        <FeaturePageClient slug={slug} />
+      </Suspense>
     </div>
   )
 }
